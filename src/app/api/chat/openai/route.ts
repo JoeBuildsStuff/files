@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 import type { ChatMessage, PageContext } from '@/types/chat'
 import { availableTools, toolExecutors } from '../tools'
+import { createClient } from '@/lib/supabase/server'
 
 // Initialize OpenAI client
 const openai = new OpenAI({
@@ -54,6 +55,18 @@ interface OpenAIAPIResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse<OpenAIAPIResponse>> {
   try {
+    // Check authentication
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error('User not authenticated for OpenAI chat API:', userError);
+      return NextResponse.json({ 
+        message: 'User not authenticated',
+        actions: []
+      }, { status: 401 });
+    }
+
     let body: OpenAIAPIRequest
 
     // Check if the request is multipart/form-data (file upload)

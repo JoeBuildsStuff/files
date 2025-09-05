@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { ChatMessage, PageContext } from '@/types/chat'
 import Anthropic from '@anthropic-ai/sdk'
 import { availableTools, toolExecutors } from './tools'
+import { createClient } from '@/lib/supabase/server'
 
 // Initialize Anthropic client
 const anthropic = new Anthropic({
@@ -53,6 +54,18 @@ interface ChatAPIResponse {
 
 export async function POST(request: NextRequest): Promise<NextResponse<ChatAPIResponse>> {
   try {
+    // Check authentication
+    const supabase = await createClient();
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      console.error('User not authenticated for chat API:', userError);
+      return NextResponse.json({ 
+        message: 'User not authenticated',
+        actions: []
+      }, { status: 401 });
+    }
+
     let body: ChatAPIRequest
 
     // Check if the request is multipart/form-data (file upload)
