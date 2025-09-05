@@ -18,7 +18,9 @@ return (
   <html lang="en" suppressHydrationWarning>
       <body className={inter.className + ""}>
       <Providers>
+        <div className="h-screen w-screen">
         {children}
+        </div>
       </Providers>
     </body>
   </html>

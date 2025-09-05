@@ -156,7 +156,8 @@ export function useChat({ onSendMessage, onActionClick }: UseChatProps = {}) {
         await onSendMessage(content, attachments)
       } else {
         // Determine which API to use based on model selection
-        const isCerebrasModel = model?.startsWith('gpt-oss-120b')
+        const isCerebrasModel = model?.startsWith('gpt-oss-120b') && !model.includes(':')
+        const isLocalLlamaModel = model?.startsWith('gpt-oss:')
         const isOpenAIModel = model?.startsWith('gpt-5')
         
         if (isCerebrasModel) {
@@ -190,6 +191,51 @@ export function useChat({ onSendMessage, onActionClick }: UseChatProps = {}) {
 
           if (!response.ok) {
             throw new Error(`Cerebras API error: ${response.status}`)
+          }
+
+          const result = await response.json()
+          
+          // Add the assistant message with tool calls and citations if available
+          const assistantMessage: Omit<ChatMessage, 'id' | 'timestamp'> = {
+            role: 'assistant',
+            content: result.message || 'I apologize, but I couldn\'t generate a response.',
+            suggestedActions: result.actions || [],
+            toolCalls: result.toolCalls || undefined,
+            citations: result.citations || undefined
+          }
+          
+          addMessage(assistantMessage)
+        } else if (isLocalLlamaModel) {
+          // Use Local Llama API
+          const localLlamaFormData = new FormData()
+          localLlamaFormData.append('message', content)
+          localLlamaFormData.append('context', JSON.stringify(currentContext))
+          localLlamaFormData.append('messages', JSON.stringify(messages.slice(-10)))
+          if (model) {
+            localLlamaFormData.append('model', model)
+          }
+          if (reasoningEffort) {
+            localLlamaFormData.append('reasoning_effort', reasoningEffort)
+          }
+          
+          // Add attachments if any
+          if (attachments && attachments.length > 0) {
+            attachments.forEach((attachment, index) => {
+              localLlamaFormData.append(`attachment-${index}`, attachment.file)
+              localLlamaFormData.append(`attachment-${index}-name`, attachment.name)
+              localLlamaFormData.append(`attachment-${index}-type`, attachment.type)
+              localLlamaFormData.append(`attachment-${index}-size`, attachment.size.toString())
+            })
+            localLlamaFormData.append('attachmentCount', attachments.length.toString())
+          }
+
+          const response = await fetch('/api/chat/local-llama/openai', {
+            method: 'POST',
+            body: localLlamaFormData,
+          })
+
+          if (!response.ok) {
+            throw new Error(`Local Llama API error: ${response.status}`)
           }
 
           const result = await response.json()

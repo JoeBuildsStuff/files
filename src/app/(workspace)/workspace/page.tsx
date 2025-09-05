@@ -1,3 +1,9 @@
-export default function Home() {
-  return <div>Home</div>;
+import { FileManager } from '@/components/files'
+
+export default function WorkspacePage() {
+  return (
+    <div className="h-full overflow-auto">
+      <FileManager />
+    </div>
+  )
 }

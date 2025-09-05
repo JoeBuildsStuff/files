@@ -7,9 +7,6 @@ import { useChatStore } from "@/lib/chat/chat-store";
 import { cn } from "@/lib/utils";
 
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"; 
-
-import { Button } from "@/components/ui/button";
-import { AudioLines } from "lucide-react";
 import ReportIssueButton from "@/components/report-issue-button";
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
@@ -19,7 +16,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     <SidebarProvider> 
       <AppSidebar /> 
       <main className={cn(
-        "flex-1 overflow-auto px-4 grid grid-rows-[auto_1fr] transition-all duration-300 ease-in-out",
+        "flex-1 px-4 grid grid-rows-[auto_1fr] h-full transition-all duration-300 ease-in-out",
         // Adjust right margin when chat is maximized
         isMaximized && "mr-96"
       )}> 
@@ -32,7 +29,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
             <ReportIssueButton />
           </div>
         </header>
-        <div className="mb-4 overflow-auto">
+        <div className="mb-4 min-h-0">
           {children}
         </div>
       </main>
