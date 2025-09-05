@@ -149,7 +149,7 @@ export async function signInWithPassword(formData: FormData) {
   if (!result.success) {
     console.log("validation-error", result.error)
     // Construct a more user-friendly error message
-    const errorMessages = result.error.errors.map(e => e.message).join(', ')
+    const errorMessages = result.error.issues.map((e: z.core.$ZodIssue) => e.message).join(', ')
     let redirectUrl = `/signin/password?error=validation&message=${encodeURIComponent(errorMessages)}`;
     if (next) {
       redirectUrl += `&next=${encodeURIComponent(next)}`;
@@ -190,7 +190,7 @@ export async function signUpWithPassword(formData: FormData) {
 
   if (!result.success) {
     console.log("validation-error", result.error)
-    const errorMessages = result.error.errors.map(e => e.message).join(', ')
+    const errorMessages = result.error.issues.map((e: z.core.$ZodIssue) => e.message).join(', ')
     redirect(`/signup/password?error=validation&message=${encodeURIComponent(errorMessages)}`)
   }
 
@@ -266,7 +266,7 @@ export async function updateUserPassword(formData: FormData) {
 
   if (!result.success) {
     console.log("validation-error", result.error.flatten().fieldErrors)
-    const errorMessages = result.error.errors.map(e => e.message).join(', ')
+    const errorMessages = result.error.issues.map((e: z.core.$ZodIssue) => e.message).join(', ')
     // It's important to redirect back to the update-password page with the error
     redirect(`/update-password?error=validation_error&message=${encodeURIComponent(errorMessages)}`)
   }
