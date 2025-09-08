@@ -1,9 +1,6 @@
-import { FileManager } from '@/components/files'
+import { redirect } from "next/navigation";
+
 
 export default function WorkspacePage() {
-  return (
-    <div className="h-full overflow-auto">
-      <FileManager />
-    </div>
-  )
+redirect('/workspace/files')
 }

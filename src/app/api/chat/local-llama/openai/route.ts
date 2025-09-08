@@ -22,6 +22,7 @@ interface LocalLlamaAPIRequest {
 
 interface LocalLlamaAPIResponse {
   message: string
+  reasoning?: string
   stream?: ReadableStream
   rawResponse?: unknown
   toolCalls?: Array<{
@@ -47,6 +48,7 @@ interface OllamaResponse {
   choices?: Array<{
     message?: {
       content?: string
+      reasoning?: string
       tool_calls?: Array<{
         id: string
         function: {
@@ -223,7 +225,7 @@ async function getOllamaResponse(
   model: string = 'gpt-oss:20b',
   stream: boolean = false,
   max_completion_tokens: number = 4096,
-  temperature: number = 0.7,
+  temperature: number = 0.0,
   top_p: number = 0.9
 ): Promise<LocalLlamaAPIResponse> {
   try {
@@ -464,9 +466,11 @@ Guidelines:
     // Handle the final response
     if (finalResponse) {
       const content = finalResponse.choices?.[0]?.message?.content || 'No response generated';
+      const reasoning = finalResponse.choices?.[0]?.message?.reasoning || undefined;
 
       return {
         message: content,
+        reasoning: reasoning, 
         toolCalls: allToolCalls.length > 0 ? allToolCalls : undefined,
         rawResponse: finalResponse
       };

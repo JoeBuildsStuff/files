@@ -16,6 +16,7 @@ export interface ChatMessage {
   id: string
   role: 'user' | 'assistant' | 'system'
   content: string
+  reasoning?: string
   timestamp: Date
   attachments?: Array<{
     id: string

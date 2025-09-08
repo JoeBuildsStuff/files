@@ -244,6 +244,7 @@ export function useChat({ onSendMessage, onActionClick }: UseChatProps = {}) {
           const assistantMessage: Omit<ChatMessage, 'id' | 'timestamp'> = {
             role: 'assistant',
             content: result.message || 'I apologize, but I couldn\'t generate a response.',
+            reasoning: result.reasoning || undefined,
             suggestedActions: result.actions || [],
             toolCalls: result.toolCalls || undefined,
             citations: result.citations || undefined

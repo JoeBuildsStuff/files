@@ -1,7 +1,7 @@
 'use client'
 
 import { formatDistanceToNow } from 'date-fns'
-import { ChevronDown, Lightbulb, FileText, FileVideo, File, FileArchive, FileSpreadsheet, Headphones, Image as ImageIcon } from 'lucide-react'
+import { ChevronDown, Lightbulb, FileText, FileVideo, File, FileArchive, FileSpreadsheet, Headphones, Image as ImageIcon, Brain } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeHighlight from 'rehype-highlight'
@@ -310,6 +310,33 @@ export function ChatMessage({ message, onActionClick }: ChatMessageProps) {
             </div>
         )}
 
+        {/* Reasoning */}
+        {!isSystem && message.reasoning && (
+          <div className="space-y-2 mb-2 w-72">
+              <Collapsible  className="rounded-lg px-3 py-2 text-sm break-words bg-muted text-foreground rounded-bl-sm">
+                <CollapsibleTrigger asChild>
+                  <button className="flex items-center justify-between w-full cursor-pointer group">
+                    <div className="flex items-center gap-2 font-light">
+                      <Brain className="size-3 shrink-0 text-muted-foreground" strokeWidth={1.5}/>
+                      <span className="text-muted-foreground group-hover:underline text-xs">
+                        Reasoning
+                      </span>
+                    </div>
+                    <ChevronDown className="size-4 shrink-0 text-muted-foreground group-data-[state=open]:rotate-180 transition-transform" strokeWidth={1.5}/>
+                  </button>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                <div className="space-y-2 mt-2">
+                    {/* Reasoning response */}
+                    <div className="text-muted-foreground text-sm font-light">
+                        {message.reasoning}
+                    </div>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+          </div>
+        )}
+
         {/* Tool calls - shown before the response for non-system messages */}
         {!isSystem && message.toolCalls && message.toolCalls.length > 0 && (
           <div className="space-y-2 mb-2 w-72">
@@ -488,7 +515,7 @@ export function ChatMessage({ message, onActionClick }: ChatMessageProps) {
                     },
                   }}
                 >
-                  {message.content}
+                  {message.content} 
                 </ReactMarkdown>
               </div>
             )}

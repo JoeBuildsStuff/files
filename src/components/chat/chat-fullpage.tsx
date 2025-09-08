@@ -75,7 +75,7 @@ export function ChatFullPage() {
   }
 
   return (
-    <div className="h-full flex flex-col relative">
+    <div className="h-[calc(100vh-5rem)] flex flex-col relative">
       {/* Layout mode toggle group */}
       <div className="absolute top-0 left-0 z-10 flex items-center justify-center"> 
         <ToggleGroup type="single" defaultValue="fullpage" className="bg-background/95 backdrop-blur border rounded-lg">

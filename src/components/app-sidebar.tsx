@@ -8,18 +8,14 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 
-import { Plus, SquarePen, Command, ArrowBigUp, Search, Image } from "lucide-react"
-import Spinner from "@/components/ui/spinner"
+import { SquarePen, Command, ArrowBigUp, Search, Image } from "lucide-react"
 import { SidebarLogo } from "./app-sidebar-logo"
-import { cn } from "@/lib/utils"
 import { AuthButton } from "@/components/auth-button"
-
-import Link from "next/link"
+import { ModeToggle } from "./mode-toggle"
 
 export function AppSidebar() {
 
