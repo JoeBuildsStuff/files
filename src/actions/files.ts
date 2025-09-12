@@ -241,6 +241,42 @@ export async function getThumbnailUrl(filePath: string, mimeType?: string): Prom
   }
 }
 
+export async function getFullImageUrl(filePath: string, mimeType?: string): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    const supabase = await createClient()
+    
+    // Get the current user
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return { success: false, error: 'Unauthorized' }
+    }
+
+    // Verify the file belongs to the user
+    if (!filePath.startsWith(user.id + '/')) {
+      return { success: false, error: 'Unauthorized to access this file' }
+    }
+
+    // Check if it's an image file
+    if (!mimeType || !mimeType.startsWith('image/')) {
+      return { success: false, error: 'File is not an image' }
+    }
+
+    // Create signed URL without any transformations (full size)
+    const { data, error } = await supabase.storage
+      .from(BUCKET_NAME)
+      .createSignedUrl(filePath, 3600) // 1 hour expiry, no transformations
+
+    if (error) {
+      return { success: false, error: error.message }
+    }
+
+    return { success: true, url: data.signedUrl }
+  } catch (error) {
+    console.error('Get full image error:', error)
+    return { success: false, error: 'Failed to get full image' }
+  }
+}
+
 // Data table compatible functions
 export async function getFiles(searchParams?: Record<string, unknown>): Promise<{ 
   success: boolean; 

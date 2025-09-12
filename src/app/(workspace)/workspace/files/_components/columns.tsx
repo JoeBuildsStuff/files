@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { ColumnDef } from "@tanstack/react-table"
 import { Checkbox } from "@/components/ui/checkbox"
 import { DataTableColumnHeader } from "@/components/data-table/data-table-column-header"
@@ -8,18 +9,23 @@ import {
   FileText, 
   Calendar, 
   HardDrive, 
-  FileImage, 
-  FileVideo, 
-  FileAudio, 
-  FileSpreadsheet, 
-  FileBarChart, 
-  Archive,
   Type,
-  ImageIcon
+  ImageIcon,
+  Headphones,
+  Clapperboard,
+  Presentation,
+  Table2,
+  Text,
+  Image,
+  Code,
+  Braces,
+  Book
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { UserFile } from "@/types"
 import { FileThumbnail } from "@/components/ui/file-thumbnail"
+import { ImageDialog } from "@/components/ui/image-dialog"
+import FileNameInput from "@/components/supabase/_components/file-name-input"
 
 // Helper function to format file size
 function formatFileSize(bytes: number): string {
@@ -41,35 +47,164 @@ function getFileType(mimeType: string): string {
   if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return 'Spreadsheet'
   if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'Presentation'
   if (mimeType.includes('zip') || mimeType.includes('archive')) return 'Archive'
+  if (mimeType.includes('json')) return 'JSON'
+  if (mimeType.includes('javascript') || mimeType.includes('typescript') || mimeType.includes('python') || mimeType.includes('java') || mimeType.includes('cpp') || mimeType.includes('csharp') || mimeType.includes('php') || mimeType.includes('ruby') || mimeType.includes('go') || mimeType.includes('rust') || mimeType.includes('swift') || mimeType.includes('kotlin') || mimeType.includes('html') || mimeType.includes('css') || mimeType.includes('xml') || mimeType.includes('yaml') || mimeType.includes('markdown') || mimeType.includes('sql')) return 'Code'
+  if (mimeType.includes('epub') || mimeType.includes('mobi') || mimeType.includes('azw') || mimeType.includes('fb2') || mimeType.includes('djvu')) return 'eBook'
   return 'File'
 }
 
-// Helper function to get the appropriate Lucide icon for file type
-function getFileIcon(mimeType: string) {
-  if (mimeType.startsWith('image/')) return FileImage
-  if (mimeType.startsWith('video/')) return FileVideo
-  if (mimeType.startsWith('audio/')) return FileAudio
-  if (mimeType.startsWith('text/')) return FileText
-  if (mimeType.includes('pdf')) return FileText
-  if (mimeType.includes('word') || mimeType.includes('document')) return FileText
-  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return FileSpreadsheet
-  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return FileBarChart
-  if (mimeType.includes('zip') || mimeType.includes('archive')) return Archive
-  return File
+// Helper function to get badge variant for file type
+function getFileTypeBadgeVariant(mimeType: string): "red" | "blue" | "green" | "amber" | "purple" | "gray" {
+  if (mimeType.startsWith('image/')) return 'red'
+  if (mimeType.startsWith('video/')) return 'red'
+  if (mimeType.startsWith('audio/')) return 'red'
+  if (mimeType.startsWith('text/')) return 'blue'
+  if (mimeType.includes('pdf')) return 'red'
+  if (mimeType.includes('word') || mimeType.includes('document')) return 'blue'
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return 'green'
+  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'amber'
+  if (mimeType.includes('zip') || mimeType.includes('archive')) return 'gray'
+  if (mimeType.includes('json')) return 'purple'
+  if (mimeType.includes('javascript') || mimeType.includes('typescript') || mimeType.includes('python') || mimeType.includes('java') || mimeType.includes('cpp') || mimeType.includes('csharp') || mimeType.includes('php') || mimeType.includes('ruby') || mimeType.includes('go') || mimeType.includes('rust') || mimeType.includes('swift') || mimeType.includes('kotlin') || mimeType.includes('html') || mimeType.includes('css') || mimeType.includes('xml') || mimeType.includes('yaml') || mimeType.includes('markdown') || mimeType.includes('sql')) return 'purple'
+  if (mimeType.includes('epub') || mimeType.includes('mobi') || mimeType.includes('azw') || mimeType.includes('fb2') || mimeType.includes('djvu')) return 'blue'
+  return 'gray'
 }
 
-// Helper function to get file type color
-function getFileTypeColor(mimeType: string): string {
-  if (mimeType.startsWith('image/')) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-  if (mimeType.startsWith('video/')) return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300'
-  if (mimeType.startsWith('audio/')) return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300'
-  if (mimeType.startsWith('text/')) return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
-  if (mimeType.includes('pdf')) return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300'
-  if (mimeType.includes('word') || mimeType.includes('document')) return 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-300'
-  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300'
-  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300'
-  if (mimeType.includes('zip') || mimeType.includes('archive')) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300'
-  return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300'
+
+// Helper function to get file type icon
+function getFileTypeIcon(mimeType: string) {
+  // PDF
+  if (mimeType.includes('pdf')) {
+    return (
+      <div className="size-5 bg-red-50 text-red-700 dark:text-red-400 dark:bg-red-900/20 ring-1 ring-inset ring-red-600/10 dark:ring-red-600/30 rounded-xs flex items-center justify-center">
+        <span className="text-[8px] font-bold">PDF</span>
+      </div>
+    )
+  }
+
+  // Document
+  if (mimeType.includes('word') || mimeType.includes('document') || mimeType.startsWith('text/')) {
+    return (
+      <div className="size-5 bg-blue-50 text-blue-700 dark:text-blue-400 dark:bg-blue-900/20 ring-1 ring-inset ring-blue-700/10 dark:ring-blue-600/30 rounded-xs p-0.5 flex items-center justify-center">
+        <Text className="size-4" />
+      </div>
+    )
+  }
+
+  // Sheets/Spreadsheet
+  if (mimeType.includes('spreadsheet') || mimeType.includes('excel')) {
+    return (
+      <div className="size-5 bg-green-50 text-green-700 dark:text-green-400 dark:bg-green-900/20 ring-1 ring-inset ring-green-600/20 dark:ring-green-600/30 rounded-xs p-0.5 flex items-center justify-center">
+        <Table2 className="size-4" />
+      </div>
+    )
+  }
+
+  // Presentation
+  if (mimeType.includes('presentation') || mimeType.includes('powerpoint')) {
+    return (
+      <div className="size-5 bg-amber-50 text-amber-800 dark:text-amber-400 dark:bg-amber-900/20 ring-1 ring-inset ring-amber-600/20 dark:ring-amber-600/30 rounded-xs p-0.5 flex items-center justify-center">
+        <Presentation className="size-4" />
+      </div>
+    )
+  }
+
+  // Image
+  if (mimeType.startsWith('image/')) {
+    return (
+      <div className="size-5 bg-red-50 text-red-700 dark:text-red-400 dark:bg-red-900/20 ring-1 ring-inset ring-red-600/10 dark:ring-red-600/30 rounded-xs p-0.5 flex items-center justify-center">
+        <Image className="size-4" />
+      </div>
+    )
+  }
+
+  // Video
+  if (mimeType.startsWith('video/')) {
+    return (
+      <div className="size-5 bg-red-50 text-red-700 dark:text-red-400 dark:bg-red-900/20 ring-1 ring-inset ring-red-600/10 dark:ring-red-600/30 rounded-xs p-0.5 flex items-center justify-center">
+        <Clapperboard className="size-4" />
+      </div>
+    )
+  }
+
+  // Audio
+  if (mimeType.startsWith('audio/')) {
+    return (
+      <div className="size-5 bg-red-50 text-red-700 dark:text-red-400 dark:bg-red-900/20 ring-1 ring-inset ring-red-600/10 dark:ring-red-600/30 rounded-xs p-0.5 flex items-center justify-center">
+        <Headphones className="size-4" />
+      </div>
+    )
+  }
+
+  // JSON
+  if (mimeType.includes('json')) {
+    return (
+      <div className="size-5 bg-red-50 text-purple-700 dark:text-purple-400 dark:bg-purple-900/20 ring-1 ring-inset ring-purple-600/10 dark:ring-purple-600/30 rounded-xs p-0.5 flex items-center justify-center">
+        <Braces className="size-4" />
+      </div>
+    )
+  }
+
+  // Code files
+  if (mimeType.includes('javascript') || mimeType.includes('typescript') || mimeType.includes('python') || mimeType.includes('java') || mimeType.includes('cpp') || mimeType.includes('csharp') || mimeType.includes('php') || mimeType.includes('ruby') || mimeType.includes('go') || mimeType.includes('rust') || mimeType.includes('swift') || mimeType.includes('kotlin') || mimeType.includes('html') || mimeType.includes('css') || mimeType.includes('xml') || mimeType.includes('yaml') || mimeType.includes('markdown') || mimeType.includes('sql')) {
+    return (
+      <div className="size-5 bg-red-50 text-purple-700 dark:text-purple-400 dark:bg-purple-900/20 ring-1 ring-inset ring-purple-600/10 dark:ring-purple-600/30 rounded-xs p-0.5 flex items-center justify-center">
+        <Code className="size-4" />
+      </div>
+    )
+  }
+
+  // eBooks
+  if (mimeType.includes('epub') || mimeType.includes('mobi') || mimeType.includes('azw') || mimeType.includes('fb2') || mimeType.includes('djvu')) {
+    return (
+      <div className="size-5 bg-blue-50 text-blue-700 dark:text-blue-400 dark:bg-blue-900/20 ring-1 ring-inset ring-blue-700/10 dark:ring-blue-600/30 rounded-xs p-0.5 flex items-center justify-center">
+        <Book className="size-4" />
+      </div>
+    )
+  }
+
+  // Default file icon
+  return (
+    <div className="size-5 bg-gray-50 text-gray-700 dark:text-gray-400 dark:bg-gray-900/20 ring-1 ring-inset ring-gray-600/10 dark:ring-gray-600/30 rounded-xs p-0.5 flex items-center justify-center">
+      <File className="size-4" />
+    </div>
+  )
+}
+
+// Clickable thumbnail component
+function ClickableThumbnail({ file }: { file: UserFile }) {
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  const handleClick = () => {
+    if (file.mime_type.startsWith('image/')) {
+      setIsDialogOpen(true)
+    }
+  }
+
+  return (
+    <>
+      <div 
+        className={file.mime_type.startsWith('image/') ? "cursor-pointer hover:opacity-80 transition-opacity" : ""}
+        onClick={handleClick}
+      >
+        <FileThumbnail
+          filePath={file.path}
+          mimeType={file.mime_type}
+          fileName={file.name}
+          className="w-10 h-10"
+        />
+      </div>
+      {file.mime_type.startsWith('image/') && (
+        <ImageDialog
+          filePath={file.path}
+          mimeType={file.mime_type}
+          fileName={file.name}
+          isOpen={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+        />
+      )}
+    </>
+  )
 }
 
 export const columns: ColumnDef<UserFile>[] = [
@@ -110,14 +245,7 @@ export const columns: ColumnDef<UserFile>[] = [
     cell: ({ row }) => {
       const file = row.original
       
-      return (
-        <FileThumbnail
-          filePath={file.path}
-          mimeType={file.mime_type}
-          fileName={file.name}
-          className="w-10 h-10"
-        />
-      )
+      return <ClickableThumbnail file={file} />
     },
   },
   {
@@ -131,20 +259,14 @@ export const columns: ColumnDef<UserFile>[] = [
     ),
     cell: ({ row }) => {
       const file = row.original
-      const fileType = getFileType(file.mime_type)
-      const typeColor = getFileTypeColor(file.mime_type)
-      const FileIcon = getFileIcon(file.mime_type)
       
       return (
-        <div className="flex items-center gap-3">
-          <div className={`flex items-center justify-center w-8 h-8 rounded-md ${typeColor}`}>
-            <FileIcon className="size-4" />
-          </div>
-          <div className="flex flex-col">
-            <span className="font-medium text-sm">{file.name}</span>
-            <span className="text-xs text-muted-foreground">{fileType}</span>
-          </div>
-        </div>
+        <FileNameInput
+          filePath={file.path}
+          initialValue={file.name}
+          placeholder="Enter file name..."
+          className="font-medium text-sm border-0 shadow-none focus-visible:ring-0 h-6"
+        />
       )
     },
     meta: {
@@ -190,17 +312,19 @@ export const columns: ColumnDef<UserFile>[] = [
     cell: ({ row }) => {
       const mimeType = row.getValue("mime_type") as string
       const fileType = getFileType(mimeType)
-      const typeColor = getFileTypeColor(mimeType)
-      const FileIcon = getFileIcon(mimeType)
+      const badgeVariant = getFileTypeBadgeVariant(mimeType)
       
       return (
+        <div className="flex items-center gap-1">
+          {getFileTypeIcon(mimeType)}
         <Badge 
-          variant="secondary" 
-          className={`text-xs font-normal ${typeColor} flex items-center gap-1`}
+          variant={badgeVariant}
+          className="text-xs font-normal flex items-center gap-1"
         >
-          <FileIcon className="size-3" />
+
           {fileType}
         </Badge>
+        </div>
       )
     },
     meta: {
@@ -216,6 +340,9 @@ export const columns: ColumnDef<UserFile>[] = [
         { label: "Spreadsheet", value: "spreadsheet" },
         { label: "Presentation", value: "presentation" },
         { label: "Archive", value: "archive" },
+        { label: "Code", value: "code" },
+        { label: "JSON", value: "json" },
+        { label: "eBook", value: "ebook" },
         { label: "Other", value: "other" },
       ],
     },
